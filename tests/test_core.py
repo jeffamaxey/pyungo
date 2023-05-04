@@ -187,7 +187,7 @@ def test_multiple_outputs_with_iterable():
 
     res = graph.calculate(data={"a": 2, "b": 3})
 
-    assert isinstance(res, tuple) is True
+    assert isinstance(res, tuple)
     assert graph.data["c"] == [0, 1, 3]
     assert graph.data["d"] == 30
     assert res[0] == [0, 1, 3]

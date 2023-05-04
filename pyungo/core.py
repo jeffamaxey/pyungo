@@ -42,7 +42,7 @@ def topological_sort(data):
     extra_items_in_deps = reduce(set.union, data.values()) - set(data.keys())
     data.update({item: set() for item in extra_items_in_deps})
     while True:
-        ordered = set(item for item, dep in data.items() if not dep)
+        ordered = {item for item, dep in data.items() if not dep}
         if not ordered:
             break
         yield sorted(ordered)
@@ -50,7 +50,7 @@ def topological_sort(data):
             item: (dep - ordered) for item, dep in data.items() if item not in ordered
         }
     if data:
-        raise PyungoError("A cyclic dependency exists amongst {}".format(data))
+        raise PyungoError(f"A cyclic dependency exists amongst {data}")
 
 
 class Node:
@@ -82,16 +82,14 @@ class Node:
         self._process_outputs(outputs)
 
     def __repr__(self):
-        return "Node({}, <{}>, {}, {})".format(
-            self._id, self._fct.__name__, self.input_names, self.output_names
-        )
+        return f"Node({self._id}, <{self._fct.__name__}>, {self.input_names}, {self.output_names})"
 
     def __call__(self, *args, **kwargs):
         """ run the function attached to the node, and store the result """
         t1 = dt.datetime.utcnow()
         res = self._fct(*args, **kwargs)
         t2 = dt.datetime.utcnow()
-        LOGGER.info("Ran {} in {}".format(self, t2 - t1))
+        LOGGER.info(f"Ran {self} in {t2 - t1}")
         # save results to outputs
         if len(self._outputs) == 1:
             self._outputs[0].value = res
@@ -108,14 +106,12 @@ class Node:
     @property
     def input_names(self):
         """ return a list of all input names """
-        input_names = [i.name for i in self._inputs]
-        return input_names
+        return [i.name for i in self._inputs]
 
     @property
     def inputs_without_constants(self):
         """ return the list of inputs, when inputs are not constants """
-        inputs = [i for i in self._inputs if not i.is_constant]
-        return inputs
+        return [i for i in self._inputs if not i.is_constant]
 
     @property
     def kwargs(self):
@@ -168,7 +164,7 @@ class Node:
         kwarg_values = inspect.getargspec(self._fct).defaults
         if kwargs and kwarg_values:
             kwarg_names = inspect.getargspec(self._fct).args[-len(kwarg_values) :]
-            self._kwargs_default = {k: v for k, v in zip(kwarg_names, kwarg_values)}
+            self._kwargs_default = dict(zip(kwarg_names, kwarg_values))
 
     def _process_outputs(self, outputs):
         """ converter data passed to Output objects and store them """
@@ -195,7 +191,7 @@ class Node:
             if input_.name == input_name:
                 input_.value = value
                 return
-        msg = 'input "{}" does not exist in this node'.format(input_name)
+        msg = f'input "{input_name}" does not exist in this node'
         raise PyungoError(msg)
 
     def run_with_loaded_inputs(self):
@@ -260,8 +256,7 @@ class Graph:
     @property
     def sim_kwargs(self):
         """ return kwarg names (mapped) of every nodes """
-        kwargs = [k for node in self._nodes.values() for k in node.kwargs]
-        return kwargs
+        return [k for node in self._nodes.values() for k in node.kwargs]
 
     @property
     def sim_outputs(self):
@@ -330,7 +325,7 @@ class Graph:
         for n in self._nodes.values():
             for out_name in n.output_names:
                 if out_name in node.output_names:
-                    msg = "{} output already exist".format(out_name)
+                    msg = f"{out_name} output already exist"
                     raise PyungoError(msg)
         self._nodes[node.id] = node
 
@@ -376,11 +371,9 @@ class Graph:
             # loading node with inputs
             for item in items:
                 node = self._get_node(item)
-                inputs = [i for i in node.inputs_without_constants]
+                inputs = list(node.inputs_without_constants)
                 for inp in inputs:
-                    if not inp.is_kwarg or (
-                        inp.is_kwarg and inp.map in self._data._inputs
-                    ):
+                    if not inp.is_kwarg or inp.map in self._data._inputs:
                         node.set_value_to_input(inp.name, self._data[inp.map])
                     else:
                         node.set_value_to_input(
@@ -398,7 +391,7 @@ class Graph:
                 results = pool.map(Graph.run_node, [self._get_node(i) for i in items])
                 pool.close()
                 pool.join()
-                results = {k: v for k, v in results}
+                results = dict(results)
             else:
                 results = {}
                 for item in items:
@@ -416,7 +409,7 @@ class Graph:
                         self._data[out.map] = res[i]
         t2 = dt.datetime.utcnow()
         total_compute_time = t2 - t1
-        LOGGER.info("Calculation finished in {}".format(total_compute_time))
+        LOGGER.info(f"Calculation finished in {total_compute_time}")
 
         total_compute_time_seconds = total_compute_time.total_seconds()
 

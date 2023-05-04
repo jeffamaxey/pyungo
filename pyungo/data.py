@@ -6,10 +6,7 @@ from .errors import PyungoError
 
 class Data:
     def __init__(self, inputs, do_deepcopy=True):
-        if do_deepcopy:
-            self._inputs = deepcopy(inputs)
-        else:
-            self._inputs = inputs
+        self._inputs = deepcopy(inputs) if do_deepcopy else inputs
         self._outputs = {}
 
     @property
@@ -32,16 +29,13 @@ class Data:
     def check_inputs(self, sim_inputs, sim_outputs, sim_kwargs):
         """ make sure data inputs provided are good enough """
         data_inputs = set(self.inputs.keys())
-        diff = data_inputs - (data_inputs - set(sim_outputs))
-        if diff:
+        if diff := data_inputs - (data_inputs - set(sim_outputs)):
             msg = "The following inputs are already used in the model: {}"
             raise PyungoError(msg.format(list(diff)))
         inputs_to_provide = set(sim_inputs) - set(sim_outputs)
-        diff = inputs_to_provide - data_inputs
-        if diff:
-            msg = "The following inputs are needed: {}".format(list(diff))
+        if diff := inputs_to_provide - data_inputs:
+            msg = f"The following inputs are needed: {list(diff)}"
             raise PyungoError(msg)
-        diff = data_inputs - inputs_to_provide - set(sim_kwargs)
-        if diff:
+        if diff := data_inputs - inputs_to_provide - set(sim_kwargs):
             msg = "The following inputs are not used by the model: {}"
             raise PyungoError(msg.format(list(diff)))

@@ -70,9 +70,7 @@ class Input(_IO):
         self.is_constant = False
 
     def __repr__(self):
-        return "<{} value={} is_arg: {} is_kwarg: {}>".format(
-            self._name, self.value, self.is_arg, self.is_kwarg
-        )
+        return f"<{self._name} value={self.value} is_arg: {self.is_arg} is_kwarg: {self.is_kwarg}>"
 
     @classmethod
     def constant(cls, name, value, meta=None):
@@ -125,7 +123,7 @@ class Output(_IO):
     """
 
     def __repr__(self):
-        return "<{} value={}>".format(self._name, self.value)
+        return f"<{self._name} value={self.value}>"
 
 
 def get_if_exists(provided, existing):
@@ -136,14 +134,13 @@ def get_if_exists(provided, existing):
         is_io = False
         if isinstance(p, str):
             name = p
-        elif isinstance(p, Input) or isinstance(p, Output):
+        elif isinstance(p, (Input, Output)):
             name = p.name
             is_io = True
         else:
             res.append(p)
             continue
-        exist = existing.get(name)
-        if exist:
+        if exist := existing.get(name):
             if is_io:
                 msg = "You cannot use Input / Output in a " "Node if already defined"
                 raise TypeError(msg)

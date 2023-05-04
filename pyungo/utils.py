@@ -28,10 +28,7 @@ def get_function_return_names(fct):
                     ]
                 else:
                     name = ast_node.value.__class__.__name__
-                    msg = (
-                        "Variable name or Tuple of variable names are "
-                        "expected, got {}".format(name)
-                    )
+                    msg = f"Variable name or Tuple of variable names are expected, got {name}"
                     raise PyungoError(msg)
                 break
         if outputs:

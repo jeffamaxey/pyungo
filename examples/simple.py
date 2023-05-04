@@ -13,13 +13,11 @@ if __name__ == "__main__":
 
     @graph.register()
     def f_my_function(a, b):
-        c = a + b
-        return c
+        return a + b
 
     @graph.register(inputs=["d", "a"], outputs=["e"])
     def f_my_function3(d, a):
-        e = d - a
-        return e
+        return d - a
 
     @graph.register(outputs=["d"])
     def f_my_function2(c):
